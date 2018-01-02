@@ -9,25 +9,27 @@ class Model{
     public $absPath = "http://localhost/budeshi-2.0/webroot/";
 
     function __construct(){
-        $this->conn = mysqli_connect(SQL_HOST,SQL_USER,SQL_PASS,SQL_DB);
-        if(!$this->conn){
-            $this->error = mysqli_error();
-            die($this->error);
+        $this->conn = new mysqli(SQL_HOST,SQL_USER,SQL_PASS,SQL_DB);
+        if(mysqli_error($this->conn)){
+        echo "Failed to connect to the database check Configuration settings".msyqli_error();
+        die();
+
         }
     }
 
     function query($querystring){
-        $this->result = mysqli_query($this->conn, $querystring);
-        if($this->result){
-          return $this->result;  
+        $this->result = $this->conn->query($querystring);
+        if($this->conn->errono()){
+            die("SQL error ".$this->conn->error());
+           
         }
         else{
-            $this->error = mysqli_error($this->conn);
-            $this->errorNo = mysqli_errno($this->conn);
-            die($this->error);
-            return false;
+           return $this->result;
         }
 
+    }
+    public function escape($value){
+        return $this->conn->real_escape_string($value);
     }
 
     public function update($id, $fieldSet = [], $table = "institution", $where = "release_id"){
@@ -35,7 +37,7 @@ class Model{
         if(!empty($fieldSet)){
             foreach($fieldSet as $name=> $value){
                 if(is_string($value))
-                $fieldString .= $name."= '".$value."', ";
+                $fieldString .= $name."= '".$this->conn->real_escape_string($value)."', ";
                 else
                 $fieldString .= $name."=".$value.", ";
 
@@ -49,25 +51,18 @@ class Model{
         }
         $query = "UPDATE ".$table." SET ".$fieldString." WHERE ".$where." = '".$id."'";
         $result = $this->query($query);
-        if(!$result){
-            echo $this->error;
-            die();
-        }
+        
         return $result;
     }
 
     public function read($id, $table = "institution"){
-        $query = "SELECT * FROM ".$table." WHERE id = ".$id;
+        $query = "SELECT * FROM ".$this->conn->real_escape_string($table)." WHERE id = ".$id;
         $result = $this->query($query);
-        if(!$result){
-            echo $this->error;
-            die();
-        }
         return $result;
     }
 
-    public function delete($id, $table = "institution"){
-        $query = "DELETE FROM ".$table." WHERE id = ".$id." LIMIT 1;";
+    public function delete($id, $table){
+        $query = "DELETE FROM ".$this->conn->real_escape_string($table)." WHERE id = ".$this->conn->real_escape_string($id)." LIMIT 1;";
         $result = $this->query($query);
         if(!$result){
             echo $this->error;
@@ -76,14 +71,14 @@ class Model{
         return $result;
     }
     //create function requires fieldset parmeter to be assoc array of tablecolumn=>value set
-    public function create($fieldset, $table = "institution"){
+    public function insert($fieldset, $table){
         $fieldString = [];
         $valueString = [];
         if(!empty($fielset)){
             foreach($fieldset as $name=> $value){
                 $fieldString[] = $name;
                 if(is_string($value)){
-                $valueString[] = "'".$value."'";
+                $valueString[] = "'".$this->conn->real_escape_string($value)."'";
                 }
                 else{
                     $valueString[] = $value;
@@ -124,10 +119,7 @@ class Model{
             return $output; 
         }
     }
-    public function ajaxSuccess($data_obj, $type = "success"){
-        
-        
-    }
+   
     protected function trimText($text, $max = 100, $pgrh = 1)
     {
 
@@ -152,25 +144,6 @@ class Model{
         }
         return $textToReturn;
     }
-    protected function generate_ocid($mda_id){
-        $query = "SELECT short_name FROM mdas WHERE id = ".$mda_id;
-        $result = $this->query($query);
-        if(!$result){
-            die($this->error);
-        }
-        $name =strtolower(mysqli_fetch_array($result)[0]);
-        $code = md5(time());
-        $code = substr($code,0,3).substr($code,-3)."ng";
-        $ocid = "ocds-".OC_PREFIX."-".$code."-".$name;
-        return $ocid;
-    }
-    public function renderRow($type, $value){
-        $type = strtolower($type);
-        $row = "";
-      
-            $row = "<".$type.">".$value."</".$type.">";
-        
-        return $row;
-    }
+    
     
 }
