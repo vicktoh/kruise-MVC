@@ -6,17 +6,17 @@ define("VIEWS", "app/views");
 /// You may define other constants of your own here
 /// ***********************************DATABASE CONFIGURATIONS**********************************///
 define("SQL_HOST", "localhost");
-define("SQL_USER", "root");
-define("SQL_PASS", "victor");
-define("SQL_DB", "buddata");
+define("SQL_USER", "");
+define("SQL_PASS", "");
+define("SQL_DB", "");
 
 
 define("DB_DRIVER", "mysqli"); /// other driver values include mysql, pdo, mongodb
-define("ABS_PATH", "http://localhost/budeshi-2.0/webroot/");
-define("FILE_ROOT", "C:/xampp/htdocs/budeshi-2.0/app/"); /// file root for for file upload functionalities
-define("WEB_ROOT", "C:/xampp/htdocs/budeshi-2.0/webroot/"); /// absolute  system path to your on the server or local machine to your root folder mostimes the same folder as index.php file
+define("ABS_PATH", "");
+define("FILE_ROOT", ""); /// file root for for file upload functionalities
+define("WEB_ROOT", ""); /// absolute  system path to your on the server or local machine to your root folder mostimes the same folder as index.php file
 define("ASSET_PATH", "");
-define("OC_PREFIX", "azam7x");
+
 define("RELEASE_PATH", ABS_PATH . "Raw/");
 
 
