@@ -6,7 +6,6 @@ class Model{
     protected $result = null;
     public $error = null;
     public $errorNo = null;
-    public $absPath = "http://localhost/budeshi-2.0/webroot/";
 
     function __construct(){
         $this->conn = new mysqli(SQL_HOST,SQL_USER,SQL_PASS,SQL_DB);
@@ -15,6 +14,10 @@ class Model{
         die();
 
         }
+    }
+
+    protected function insert_id(){
+        return $this->conn->insert_id;
     }
 
     function query($querystring){
@@ -61,8 +64,9 @@ class Model{
         return $result;
     }
 
-    public function delete($id, $table){
-        $query = "DELETE FROM ".$this->conn->real_escape_string($table)." WHERE id = ".$this->conn->real_escape_string($id)." LIMIT 1;";
+    public function delete($id, $table, $where_id = "id", $limit = true){
+        $limit_string = $limit ? " LIMIT 1;": "";
+        $query = "DELETE FROM ".$this->conn->real_escape_string($table)." WHERE {$where_id} = ".$this->conn->real_escape_string($id).$limit_string;
         $result = $this->query($query);
         if(!$result){
             echo $this->error;
@@ -143,6 +147,72 @@ class Model{
             $textToReturn = $text;
         }
         return $textToReturn;
+    }
+    public function result_columns($result_obj, $column_name){
+        $output = array();
+        while($row = $result_obj->fetch_assoc()){
+            $output [] = $row[$column_name];
+        }
+        return $output;
+    }
+    public function upsert($insert_fields,$upsert_fields,$table){
+        $fieldString = [];
+        $valueString = [];
+        if(!empty($insert_fields)){
+            foreach($insert_fields as $name=> $value){
+                $fieldString[] = $name;
+                if(is_string($value)){
+                $valueString[] = "'".$this->conn->real_escape_string($value)."'";
+                }
+                else{
+                    $valueString[] = $value;
+                }
+            }
+        }
+        $fields = "(".implode(",",$fieldString).")";
+        $values = "(".implode(",", $valueString).")";
+
+        $insert_query = "INSERT INTO ".$table.$fields." VALUES ".$values;
+        $fieldString = "";
+        if(!empty($upsert_fields)){
+            foreach($upsert_fields as $name=> $value){
+                if(is_string($value))
+                $fieldString .= $name."= '".$this->conn->real_escape_string($value)."', ";
+                else
+                $fieldString .= $name."=".$value.", ";
+
+            }
+            $fieldString = rtrim($fieldString,' ,');
+        }
+        else{
+            echo "Error Empty FieldSet passed to update function..";
+            print_r($upsert_fields);   
+            die();
+        }
+        $update_query = " UPDATE ".$fieldString;
+        $query = $insert_query." ON DUPLICATE KEY ".$update_query;
+        $this->query($query);
+        return true;
+    }
+    protected function load_helper($name)
+    {
+        if (is_array($name)) {
+            foreach ($name as $nm) {
+                $helpername = HELPERS . $nm . ".php";
+                if (file_exists($helpername)) {
+                    require_once($helpername);
+                } else {
+                    die('could not find the helper file' . $helpername);
+                }
+            }
+        }
+    }
+    public function fetchAll($fields, $table){
+        $fieldString = implode(',',$fields);
+        $query = 'SELECT '.$fields.' FROM '.$table; 
+        $result = $this->query($query);
+        $data = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        return $data;
     }
     
     

@@ -1,10 +1,42 @@
 <?php 
 class Controller
 {
-    public $absPath = "http://localhost/budeshi-2.0/webroot/";
-    public $fileroot = "C:/xampp/htdocs/budeshi-2.0/app/";
-    public $notSet = [];
 
+    protected function load_view($view_name, $data)
+    {
+        $view_name = VIEWS . $view_name . ".html";
+        if (file_exists($view_name)) {
+            extract($this->view_variables($data));
+            require_once($view_name);
+        } else {
+            die("cannot find the view file '" . $view_name . "'");
+
+        }
+    }
+    protected function load_model($model_name)
+    {
+        $model_name = $model_name;
+        $name = MODELS . $model_name . ".php";
+        if (file_exists($name)) {
+            require_once($name);
+            return new $model_name;
+        } else {
+            die("Cannot find the specified model at " . $name);
+        }
+    }
+    protected function load_helper($name)
+    {
+        if (is_array($name)) {
+            foreach ($name as $nm) {
+                $helpername = HELPERS . $nm . ".php";
+                if (file_exists($helpername)) {
+                    require_once($helpername);
+                } else {
+                    die('could not find the helper file' . $helpername);
+                }
+            }
+        }
+    }
     public function check_login($array)
     {
         is_array($array) or die("invalid function parameter");
@@ -27,12 +59,12 @@ class Controller
         $dataToReturn = htmlspecialchars($dataToReturn);
         return $dataToReturn;
     }
-    public function view_variables($array)
+    protected function view_variables($array)
     {
-        foreach ($array as $key) {
-            $array[$key] = $this->filter_data($array[$key]);
+        foreach ($array as $key => $value) {
+            $array[$key] = $value;
         }
-        extract($array);
+        return $array;
     }
     public function redirect($url)
     {
@@ -53,26 +85,7 @@ class Controller
         }
         return $status;
     }
-    public function login($username, $password, $table = "users")
-    {
-        require_once("../app/core/Model.php");
-        $query = "SELECT * FROM " . $table . " WHERE username = '" . $username . "' AND password = '" . $password . "'";
-        $model = new Model();
-        $result = $model->query($query);
-        if (!$result) {
-            die($this->error);
-        }
-        if (mysqli_num_rows($result) > 0) {
-            $row = mysqli_fetch_array($result);
-            session_start();
-            $_SESSION["username"] = $row["username"];
-            $_SESSION["id"] = $row["id"];
-            $_SESSION["access_level"] = $row["access_id"];
-            return true;
-        } else {
-            return false;
-        }
-    }
+    
     public function request_method($type = "POST")
     {
         return $_SERVER["REQUEST_METHOD"];
@@ -81,7 +94,7 @@ class Controller
     /**
      * Validates and sanitizes an input post
      * @param string $name the name of the input variable
-     * @param string $process_type can be either php validate types e.g FILTER_SANITIZE_STRING defaults to  "FILTER_SANITIZE_STRING";
+     * @param string $filter_type can be either php validate types e.g FILTER_SANITIZE_STRING defaults to  "FILTER_SANITIZE_STRING";
      */
     public function input_post($name, $filter_type = FILTER_SANITIZE_STRING)
     {
@@ -95,6 +108,11 @@ class Controller
         }
 
     }
+    /**
+     * Validates and sanitizes an get input
+     * @param string $name the name of the input variable
+     * @param string $filter_type can be either of php validate types e.g FILTER_SANITIZE_STRING: defaults to "FILTER_SANITIZE_STRING";
+     */
     public function input_get($name, $filter_type = FILTER_SANITIZE_STRING){
         if (isset($_POST[$name]) and !empty($_POST[$name])) {
             
@@ -104,5 +122,15 @@ class Controller
             return FALSE;
         }
 
+    }
+    protected function uploadfile($filename, $upload_path)
+    {
+        $tmp_name = $_FILES[$filename]["tmp_name"];
+        
+        if (move_uploaded_file($tmp_name, $upload_path)) {
+            return $upload_path;
+        } else {
+            return false;
+        }
     }
 }

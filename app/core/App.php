@@ -6,11 +6,11 @@ class App{
 
 	public function __construct(){
 		$url = $this->parse_url();
-		if(file_exists("../app/controller/".$url[0].".php")){
+		if(file_exists(APP_PATH."controller/".$url[0].".php")){
 			$this->controller = ucfirst($url[0]);
 			unset($url[0]);
 		}
-		require_once("../app/controller/".$this->controller.".php");
+		require_once(APP_PATH."controller/".$this->controller.".php");
 		$this->controller = new $this->controller;
 		if(isset($url[1]))
 		{

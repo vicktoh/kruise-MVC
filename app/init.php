@@ -12,12 +12,12 @@ define("SQL_DB", "");
 
 
 define("DB_DRIVER", "mysqli"); /// other driver values include mysql, pdo, mongodb
-define("ABS_PATH", "");
-define("FILE_ROOT", ""); /// file root for for file upload functionalities
+define("ABS_PATH", "http://localhost/php_kruise/");
+define("APP_PATH", "app/");  ///Relative(relative to index.php) or absolute path to the app folder
+define("FILE_ROOT", ""); ///server file root for for file upload functionalities
 define("WEB_ROOT", ""); /// absolute  system path to your on the server or local machine to your root folder mostimes the same folder as index.php file
 define("ASSET_PATH", "");
 
-define("RELEASE_PATH", ABS_PATH . "Raw/");
 
 
 ///**************************************************************Core Classes you want readily available for you add them to the core array and make sure the files are available at * app/core/mycoreclasses.php****************************************//////
