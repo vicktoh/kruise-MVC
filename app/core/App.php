@@ -6,11 +6,13 @@ class App{
 
 	public function __construct(){
 		$url = $this->parse_url();
-		if(file_exists(APP_PATH."controller/".$url[0].".php")){
+		if(file_exists(CONTROLLERS.ucfirst($url[0]).".php")){
 			$this->controller = ucfirst($url[0]);
 			unset($url[0]);
 		}
-		require_once(APP_PATH."controller/".$this->controller.".php");
+		
+		require_once(CONTROLLERS.$this->controller.".php");
+		//die(CONTROLLERS.$this->controller.".php");
 		$this->controller = new $this->controller;
 		if(isset($url[1]))
 		{
@@ -31,6 +33,7 @@ class App{
 	
 	private function parse_url(){
 		if(isset($_GET["url"])){
+			//die($_GET['url']);
 			$url = filter_var(rtrim($_GET["url"], "/"),FILTER_SANITIZE_URL);
 			$url = explode("/",$url);
 			return $url;

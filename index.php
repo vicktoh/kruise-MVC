@@ -9,7 +9,7 @@
 $init["config_file_name"] = 'init.php';
 $init["app_folder_path"] = 'app/';
 
-defined(INIT)  or define("INIT",$init["app_folder_path"].$init["config_file_name"]);
+defined("INIT")  or define("INIT",$init["app_folder_path"].$init["config_file_name"]);
 require_once(INIT);
 $app = new App;
 ?>

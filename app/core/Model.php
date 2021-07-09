@@ -6,6 +6,8 @@ class Model{
     protected $result = null;
     public $error = null;
     public $errorNo = null;
+    public $absPath = "http://localhost/budeshi-2.0/webroot/";
+
 
     function __construct(){
         $this->conn = new mysqli(SQL_HOST,SQL_USER,SQL_PASS,SQL_DB);
@@ -15,15 +17,14 @@ class Model{
 
         }
     }
-
     protected function insert_id(){
         return $this->conn->insert_id;
     }
 
     function query($querystring){
         $this->result = $this->conn->query($querystring);
-        if($this->conn->errono()){
-            die("SQL error ".$this->conn->error());
+        if(!$this->result){
+            die("SQL error ".$this->conn->error);
            
         }
         else{
@@ -35,7 +36,7 @@ class Model{
         return $this->conn->real_escape_string($value);
     }
 
-    public function update($id, $fieldSet = [], $table = "institution", $where = "release_id"){
+    public function update($id, $fieldSet, $table, $where = "id"){
         $fieldString = "";
         if(!empty($fieldSet)){
             foreach($fieldSet as $name=> $value){
@@ -64,9 +65,8 @@ class Model{
         return $result;
     }
 
-    public function delete($id, $table, $where_id = "id", $limit = true){
-        $limit_string = $limit ? " LIMIT 1;": "";
-        $query = "DELETE FROM ".$this->conn->real_escape_string($table)." WHERE {$where_id} = ".$this->conn->real_escape_string($id).$limit_string;
+    public function delete($id, $table){
+        $query = "DELETE FROM ".$this->conn->real_escape_string($table)." WHERE id = ".$this->conn->real_escape_string($id)." LIMIT 1;";
         $result = $this->query($query);
         if(!$result){
             echo $this->error;
@@ -78,7 +78,7 @@ class Model{
     public function insert($fieldset, $table){
         $fieldString = [];
         $valueString = [];
-        if(!empty($fielset)){
+        if(!empty($fieldset)){
             foreach($fieldset as $name=> $value){
                 $fieldString[] = $name;
                 if(is_string($value)){
@@ -97,6 +97,9 @@ class Model{
         if(!$result){
             echo $this->error;
             die();
+        }
+        else{
+            $result = $this->conn->insert_id;
         }
         return $result;
 
@@ -148,6 +151,41 @@ class Model{
         }
         return $textToReturn;
     }
+    protected function load($name, $type = "helper"){
+        $to_return;
+        switch($type){
+            case "helper":
+                $name = ucfirst(strtolower($name));
+                $helper = HELPERS.$name.".php";
+                if(file_exists($helper)){
+                    require_once($helper);
+                    $to_return = new $name;
+
+                }
+                else{
+                    echo "Cannot find helper at ".$helper;
+                    die();
+                }
+            break;
+            case "library":
+                $name = ucfirst(strtolower($name));
+                $library = LIBRARIES.$name.".php";
+                if(file_exists($library)){
+                    require_once($library);
+                    $to_return = new $name;
+                }
+            break;
+            default:
+                echo "improper use of function";
+                die;
+            break;
+        }
+        return $to_return;
+    }
+    /** Returns a the column of an sql result object as an array
+     * @params $result_obj mysqli result object
+     * @params $column_name name of the column
+     */
     public function result_columns($result_obj, $column_name){
         $output = array();
         while($row = $result_obj->fetch_assoc()){
@@ -186,7 +224,7 @@ class Model{
         }
         else{
             echo "Error Empty FieldSet passed to update function..";
-            print_r($upsert_fields);   
+            print_r($fieldSet);
             die();
         }
         $update_query = " UPDATE ".$fieldString;
@@ -206,13 +244,14 @@ class Model{
                 }
             }
         }
-    }
-    public function fetchAll($fields, $table){
-        $fieldString = implode(',',$fields);
-        $query = 'SELECT '.$fields.' FROM '.$table; 
-        $result = $this->query($query);
-        $data = mysqli_fetch_all($result, MYSQLI_ASSOC);
-        return $data;
+        else{
+            if (file_exists(HELPERS.$name)) {
+                require_once(HELPERS.$name);
+            } else {
+                die('could not find the helper file' . $name. ' in helpers directory');
+            }
+
+        }
     }
     
     
