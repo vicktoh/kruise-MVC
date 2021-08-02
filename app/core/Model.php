@@ -24,8 +24,8 @@ class Model{
     function query($querystring){
         $this->result = $this->conn->query($querystring);
         if(!$this->result){
+            echo $querystring;
             die("SQL error ".$this->conn->error);
-           
         }
         else{
            return $this->result;
@@ -252,6 +252,224 @@ class Model{
             }
 
         }
+    }
+    protected function optionsToSQL($obj){
+        //$obj[] = [option_name, db_field_name, value]
+        $queries = [];
+        foreach($obj as $option){
+            //if value is not empty get query
+            if(!empty($option[2])){
+                $queries[] = $this->fieldToSQL($option);
+            }
+        }
+        
+    }
+    protected function fieldToSQL($option){
+        $option = $option[0];
+        $field = $option[1];
+        $value = $option[2];
+        $query = "";
+        if (is_array($value) and count($value) > 1) {
+            $data = [];
+            foreach ($value as $val) {
+                $data[] = is_numeric($val) ? $val : "'{$val}'";
+            }
+            $join = implode(",", $data);
+            $join = "(" . $join . ")";
+            $query = " {$field} IN " . $join;
+        } else {
+            $val = is_array($value) ? $value[0] : $value;
+            $val = is_numeric($val) ? $val : "'{$val}'";
+            $query = " {$field} =  {$val}";
+        }
+
+        return $query;
+        
+    }
+    protected function getSQL($obj)
+    {
+
+        $queries = [];
+        $method = empty($obj->method) ? false : $this->queryBuilder($obj->method, "method");
+        $mda = empty($obj->mda) ? false : $this->queryBuilder($obj->mda, "mda");
+        $year = empty($obj->year) ? false : $this->queryBuilder($obj->year, "year");
+        $published = empty($obj->year) ? false : $this->queryBuilder($obj->year, "published");
+        $contractor = empty($obj->contractor) ? false : $this->queryBuilder($obj->contractor, "contractor");
+        $text = empty($obj->text) ? false : $this->queryBuilder($obj->text, "text");
+        $state = empty($obj->state) ? false : $this->queryBuilder($obj->state, "state");
+        $cso_state = empty($obj->cso_state) ? false : $this->queryBuilder($obj->cso_state, "cso_state");
+        $monitored = empty($obj->monitored) ? false : $this->queryBuilder($obj->monitored, "monitored");
+        $sector = empty($obj->sector)? false: $this->queryBuilder($obj->sector, 'sector');
+        $cso = empty($obj->cso)? false: $this->queryBuilder($obj->cso, 'cso');
+        $lga = empty($obj->lga)? false: $this->queryBuilder($obj->lga, 'lga');
+        if ($method) {
+            $queries[] = $method;
+        }
+        if ($year) {
+            $queries[] = $year;
+        }
+        if ($published) {
+            $queries[] = $published;
+        }
+        if ($mda) {
+            $queries[] = $mda;
+        }
+        if ($contractor) {
+            $queries[] = $contractor;
+        }
+        if ($text) {
+            $queries[] = $text;
+        }
+        if ($state) {
+            $queries[] = $state;
+        }
+        if ($cso_state) {
+            $queries[] = $cso_state;
+        }
+        if ($monitored) {
+            $queries[] = $monitored;
+        }
+        if($lga) $queries [] = $lga;
+
+        if($cso) $queries [] = $cso;
+        return $queries;
+
+    }
+    private function queryBuilder($value, $type)
+    {
+        $query = "";
+        switch ($type) {
+            case "year":
+                if (is_array($value) and count($value) > 1) {
+                    $data = [];
+                    foreach ($value as $val) {
+                        $data[] = "'" . $val . "'";
+                    }
+                    $join = implode(",", $data);
+                    $join = "(" . $join . ")";
+                    $query = " p.year IN " . $join;
+                } else {
+                    $val = is_array($value) ? $value[0] : $value;
+                    $query = " p.year = '" . $val . "' ";
+                }
+                break;
+            case "lga":
+                if (is_array($value) and count($value) > 1) {
+                    $data = [];
+                    foreach ($value as $val) {
+                        $data[] = "'" . $val . "'";
+                    }
+                    $join = implode(",", $data);
+                    $join = "(" . $join . ")";
+                    $query = " p.lga IN " . $join;
+                } else {
+                    $val = is_array($value) ? $value[0] : $value;
+                    $query = " p.lga = '" . $val . "' ";
+                }
+                break;
+
+            case "state":
+                if (is_array($value) and count($value) > 1) {
+                    $data = [];
+                    foreach ($value as $val) {
+                        $data[] = "'" . $val . "'";
+                    }
+                    $join = implode(",", $data);
+                    $join = "(" . $join . ")";
+                    $query = " p.state IN " . $join . " ";
+                } else {
+                    $val = is_array($value) ? $value[0] : $value;
+                    $query = "p.state = '" . $val . "' ";
+                }
+                break;
+            case "cso_state":
+                if (is_array($value) and count($value) > 1) {
+                    $data = [];
+                    foreach ($value as $val) {
+                        $data[] = "'" . $val . "'";
+                    }
+                    $join = implode(",", $data);
+                    $join = "(" . $join . ")";
+                    $query = " c.state IN " . $join . " ";
+                } else {
+                    $val = is_array($value) ? $value[0] : $value;
+                    $query = "c.state = '" . $val . "' ";
+                }
+                break;
+            case "contractor":
+                if (is_array($value) and count($value) > 1) {
+                    $join = implode(",", $value);
+                    $join = "(" . $join . ")";
+                    $query = " ct.contractor_id IN " . $join . " ";
+                } else {
+                    $val = is_array($value) ? $value[0] : $value;
+                    $query = " ct.contractor_id = " . $val . " ";
+                }
+                break;
+            case "cso":
+                if (is_array($value) and count($value) > 1) {
+                    $join = implode(",", $value);
+                    $join = "(" . $join . ")";
+                    $query = " p.cso_id IN " . $join . " ";
+                } else {
+                    $val = is_array($value) ? $value[0] : $value;
+                    $query = " p.cso_id = " . $val . " ";
+                }
+                break;
+            case "mda":
+                if (is_array($value) and count($value) > 1) {
+                    $join = implode(",", $value);
+                    $join = "(" . $join . ")";
+                    $query = " p.mda_id IN " . $join . " ";
+                } else {
+                    $val = is_array($value) ? $value[0] : $value;
+                    $query = " p.mda_id = " . $val . " ";
+                }
+                break;
+            case "text":
+                $query = " p.title LIKE '%" . $value . "%' ";
+                break;
+            case "method":
+                if (is_array($value) and count($value) > 1) {
+                    $data = [];
+                    foreach ($value as $val) {
+                        $data[] = "'" . $val . "'";
+                    }
+                    $join = implode(",", $data);
+                    $join = "(" . $join . ")";
+                    $query = " t.procurement_method IN " . $join . " ";
+                } else {
+                    $val = is_array($value) ? $value[0] : $value;
+                    $query = " t.procurement_method = '" . $val . "' ";
+                }
+                break;
+            case "published":
+                $val = is_array($value) ? $value[0] : $value;
+                $query = " p.published = '" . $val . "' ";
+                break;
+            case "sector":
+                if (is_array($value) and count($value) > 1) {
+                    $data = [];
+                    foreach ($value as $val) {
+                        $data[] = "'" . $val . "'";
+                    }
+                    $join = implode(",", $data);
+                    $join = "(" . $join . ")";
+                    $query = " m.sector IN " . $join . " ";
+                } else {
+                    $val = is_array($value) ? $value[0] : $value;
+                    $query = " m.sector = '" . $val . "' ";
+                }
+                break;
+            
+
+
+
+
+
+
+        }
+        return $query;
     }
     
     

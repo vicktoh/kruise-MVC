@@ -20,6 +20,10 @@ class Controller
         }
         return $status;
     }
+    protected function sendJSON($data){
+        header('Content-Type: application/json');
+        echo json_encode($data);
+    }
     protected function filter_data($data)
     {
         $dataToReturn = trim($data);
@@ -89,26 +93,7 @@ class Controller
         }
         return $status;
     }
-    protected function login($username, $password, $table = "users")
-    {
-        require_once("../app/core/Model.php");
-        $query = "SELECT * FROM " . $table . " WHERE username = '" . $username . "' AND password = '" . $password . "'";
-        $model = new Model();
-        $result = $model->query($query);
-        if (!$result) {
-            die($this->error);
-        }
-        if (mysqli_num_rows($result) > 0) {
-            $row = mysqli_fetch_array($result);
-            session_start();
-            $_SESSION["username"] = $row["username"];
-            $_SESSION["id"] = $row["id"];
-            $_SESSION["access_level"] = $row["access_id"];
-            return true;
-        } else {
-            return false;
-        }
-    }
+   
     protected function request_method($type = "POST")
     {
         return $_SERVER["REQUEST_METHOD"];
@@ -119,15 +104,14 @@ class Controller
      * @param string $name the name of the input variable
      * @param string $process_type can be either php validate types e.g FILTER_SANITIZE_STRING defaults to  "FILTER_SANITIZE_STRING";
      */
-    protected function input_post($name, $filter_type = FILTER_SANITIZE_STRING)
+    protected function input_post($assoc = false)
     {
 
-        if (isset($_POST[$name]) and !empty($_POST[$name])) {
-
-            return filter_input(INPUT_POST, $name);
-        } else {
-            return false;
+        $json = file_get_contents('php://input');
+        if($json){
+            return json_decode($json, $assoc);
         }
+        return false;
 
     }
     protected function input_get($name, $filter_type = FILTER_SANITIZE_STRING)
